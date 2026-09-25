@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi Time Zone Converter</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #111827;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 820px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 22px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+      padding: 30px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      color: #0f172a;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #64748b;
+      font-size: 15px;
+    }
+
+    input[type="time"] {
+      width: 100%;
+      padding: 15px 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      font-size: 18px;
+      outline: none;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    input[type="time"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .timezone {
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 18px;
+      background: #f8fafc;
+    }
+
+    .label {
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .time {
+      font-size: 30px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .note {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .footer {
+      margin-top: 22px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      color: #334155;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .dst-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      width: 58px;
+      height: 32px;
+      flex: 0 0 auto;
+    }
+
+    .dst-switch input {
+      position: absolute;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+    }
+
+    .dst-slider {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      background: #94a3b8;
+      transition: background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .dst-slider::before {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      left: 4px;
+      top: 4px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.25);
+      transition: transform 0.25s ease;
+    }
+
+    .dst-switch input:checked + .dst-slider {
+      background: #16a34a;
+      box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+    }
+
+    .dst-switch input:checked + .dst-slider::before {
+      transform: translateX(26px);
+    }
+
+    .dst-switch input:focus-visible + .dst-slider {
+      outline: 3px solid rgba(37, 99, 235, 0.25);
+      outline-offset: 2px;
+    }
+
+    .dst-status {
+      min-width: 148px;
+      text-align: left;
+    }
+
+    body.dst-active {
+      background: linear-gradient(135deg, #052e16, #16a34a);
+    }
+
+    body.dst-active .card {
+      border: 1px solid rgba(22, 163, 74, 0.22);
+    }
+
+    body.dst-active .footer {
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    @media (max-width: 620px) {
+      .card {
+        padding: 22px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <section class="header">
+      <h1>Multi Time Zone Converter</h1>
+      <p class="subtitle">Edit any time field and all other time zones will auto-sync instantly.</p>
+    </section>
+
+    <div class="toggle">
+      <span>US Standard Time</span>
+      <label class="dst-switch" aria-label="Toggle US daylight saving time">
+        <input type="checkbox" id="useDST" checked />
+        <span class="dst-slider" aria-hidden="true"></span>
+      </label>
+      <span class="dst-status" id="dstStatus">Daylight Saving Time</span>
+    </div>
+
+    <section class="grid">
+      <div class="timezone">
+        <div class="label">Indian Standard Time / IST</div>
+        <input class="time zone-input" id="istTime" data-zone="ist" type="time" value="22:00" aria-label="IST time" />
+        <div class="note">IST = UTC + 5:30</div>
+      </div>
+
+      <div class="timezone">
+        <div class="label" id="easternLabel">Eastern Time / EDT</div>
+        <input class="time zone-input" id="easternTime" data-zone="eastern" type="time" aria-label="Eastern time" />
+        <div class="note" id="easternNote">EDT = IST - 9:30</div>
+      </div>
+
+      <div class="timezone">
+        <div class="label" id="pacificLabel">Pacific Time / PDT</div>
+        <input class="time zone-input" id="pacificTime" data-zone="pacific" type="time" aria-label="Pacific time" />
+        <div class="note" id="pacificNote">PDT = IST - 12:30</div>
+      </div>
+
+      <div class="timezone">
+        <div class="label">Australian ST / AEST</div>
+        <input class="time zone-input" id="aestTime" data-zone="aest" type="time" aria-label="AEST time" />
+        <div class="note">AEST = IST + 4:30</div>
+      </div>
+
+      <div class="timezone">
+        <div class="label">UTC</div>
+        <input class="time zone-input" id="utcTime" data-zone="utc" type="time" aria-label="UTC time" />
+        <div class="note">UTC = IST - 5:30</div>
+      </div>
+
+      <div class="timezone">
+        <div class="label">Japan ST / JST</div>
+        <input class="time zone-input" id="jstTime" data-zone="jst" type="time" aria-label="JST time" />
+        <div class="note">JST = IST + 3:30</div>
+      </div>
+    </section>
+
+    <div class="footer">
+      Tip: All fields are editable. For example, change UTC and IST/Eastern/Pacific/AEST/JST will update automatically.
+      If the converted time crosses midnight, this tool shows only the time, not the next/previous date.
+    </div>
+  </main>
+
+  <script>
+    const zoneInputs = {
+      ist: ['istTime'],
+      eastern: ['easternTime'],
+      pacific: ['pacificTime'],
+      aest: ['aestTime'],
+      utc: ['utcTime'],
+      jst: ['jstTime']
+    };
+
+    function minutesToHHMM(totalMinutes) {
+      totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+
+      return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
+    }
+
+    function hhmmToMinutes(value) {
+      if (!value) return null;
+
+      const [hours, minutes] = value.split(':').map(Number);
+      return hours * 60 + minutes;
+    }
+
+    function getOffsetsFromIST() {
+      const useDST = document.getElementById('useDST').checked;
+
+      // Offset values are minutes relative to IST.
+      // Example: UTC = IST - 5:30, so UTC offset from IST is -330.
+      return {
+        ist: 0,
+        eastern: useDST ? -570 : -630,   // EDT = IST - 9:30, EST = IST - 10:30
+        pacific: useDST ? -750 : -810,   // PDT = IST - 12:30, PST = IST - 13:30
+        aest: 270,                       // AEST = IST + 4:30
+        utc: -330,                       // UTC = IST - 5:30
+        jst: 210                         // JST = IST + 3:30
+      };
+    }
+
+    function setZoneValue(zone, value) {
+      zoneInputs[zone].forEach(id => {
+        document.getElementById(id).value = value;
+      });
+    }
+
+    function updateLabels() {
+      const useDST = document.getElementById('useDST').checked;
+
+      document.body.classList.toggle('dst-active', useDST);
+      document.getElementById('dstStatus').textContent =
+        useDST ? 'Daylight Saving Time' : 'Standard Time';
+
+      document.getElementById('easternLabel').textContent =
+        useDST ? 'Eastern Time / EDT' : 'Eastern Time / EST';
+
+      document.getElementById('easternNote').textContent =
+        useDST ? 'EDT = IST - 9:30' : 'EST = IST - 10:30';
+
+      document.getElementById('pacificLabel').textContent =
+        useDST ? 'Pacific Time / PDT' : 'Pacific Time / PST';
+
+      document.getElementById('pacificNote').textContent =
+        useDST ? 'PDT = IST - 12:30' : 'PST = IST - 13:30';
+    }
+
+    function convertFromZone(sourceZone) {
+      const offsets = getOffsetsFromIST();
+      const sourceInputId = zoneInputs[sourceZone][0];
+      const sourceValue = document.getElementById(sourceInputId).value;
+      const sourceMinutes = hhmmToMinutes(sourceValue);
+
+      if (sourceMinutes === null) return;
+
+      // Convert changed zone back to IST, then calculate every other zone from IST.
+      const istMinutes = sourceMinutes - offsets[sourceZone];
+
+      Object.keys(zoneInputs).forEach(zone => {
+        const convertedValue = minutesToHHMM(istMinutes + offsets[zone]);
+        setZoneValue(zone, convertedValue);
+      });
+
+      updateLabels();
+    }
+
+    document.querySelectorAll('.zone-input').forEach(input => {
+      input.addEventListener('input', event => {
+        convertFromZone(event.target.dataset.zone);
+      });
+    });
+
+    document.getElementById('useDST').addEventListener('change', () => {
+      // Keep IST as the anchor when switching between daylight and standard US time.
+      convertFromZone('ist');
+    });
+
+    convertFromZone('ist');
+  </script>
+</body>
+
+</html>
